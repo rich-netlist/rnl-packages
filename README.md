@@ -32,7 +32,7 @@ For the CLI, download the version from its catalog URL, verify its SHA-256 again
 - `name`, `version`: exactly the package header. RNL 0.3 §16.2 requires `major.minor`, with each 0.x a separate major. No patch numbers or preview suffixes.
 - `kind`: `extension` or `pdk`; `summary`: `zh` and `en` descriptions from `metadata.json`.
 - `url`, `sha256`: the immutable primary file URL and lowercase hexadecimal SHA-256 of its raw bytes.
-- `path`: the old library-relative path, for viewer state and gallery compatibility. `description`: the original first paragraph shown in the package picker.
+- `path`: a globally unique path in the viewer's file pool. Only the four imported 0.1 records retain their published library-relative paths for compatibility; every new version and new package name uses `NAME/VERSION/NAME.rnl`. The generator rejects duplicate paths. `description`: the original first paragraph shown in the package picker.
 - `source`: the GitHub source URL. `assets`: every file in the version directory, each with a relative `path`, immutable `url` and raw-byte `sha256`, including README and examples.
 
 Consumers must reject an unsupported schema or hash mismatch. Resolve relative URLs against the catalog URL (offline fixtures use relative URLs). Select the latest version numerically by major and minor, or select an exact locked name/version and check its locked SHA-256. Published records and all their assets are append-only: CI compares the generated catalog with the target branch / previous main commit, rejects removed or changed records, and checks that the committed catalog is generated from the files. Keep published metadata unchanged too.
@@ -40,7 +40,7 @@ Consumers must reject an unsupported schema or hash mismatch. Resolve relative U
 ## Publish a version
 
 1. Create a branch and copy a package to a **new** `packages/NAME/major.minor/` directory. Update that copy's `@PACKAGE` version. Never edit or remove a published directory or its metadata.
-2. For a new name add its kind, original library path and both summary languages to `metadata.json`. For an existing name retain its metadata.
+2. For a new name add its kind and both summary languages to `metadata.json`; no `legacyPath` is needed. For an existing name retain its metadata. New records always get version-qualified paths; the four imported 0.1 records remain byte-for-byte unchanged.
 3. Run `python scripts/catalog.py`, then `python scripts/catalog.py --check --base origin/main`. Review the generated URLs and hashes.
 4. Open an English pull request. CI checks all package headers and immutable records, reads every version without errors and renders every symbol with the **exact RNL commit in `rnl-revision.txt`**; it also runs `sky130.py --check`, including the PDK examples and stub models.
 5. After review and merge, the main workflow publishes the validated catalog and all versions to this repository's GitHub Pages. Verify the deployed catalog and hashes. There are no npm releases or Git tags in this process.

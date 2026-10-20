@@ -11,9 +11,23 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = 'https://rich-netlist.github.io/rnl-packages/'
 PACKAGE = re.compile(r'@PACKAGE\(\s*name="([a-z0-9-]+)"\s*,\s*version="([0-9]+\.[0-9]+)"\s*\)')
+# Only the four imported 0.1 records retain their published legacy paths. Every
+# later version (and every new package name) uses NAME/VERSION/NAME.rnl so that
+# multiple versions can coexist in a viewer's file pool without overwriting one.
+LEGACY_VERSIONS = {(name, '0.1') for name in (
+    'analog-canvas-extensions', 'eda-symbol', 'eda-style', 'pdk-sky130')}
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
+
+def unique_paths(packages):
+    paths = {}
+    for package in packages:
+        path = package['path']
+        key = package['name'], package['version']
+        if path in paths:
+            raise ValueError(f'duplicate catalog path {path!r}: {paths[path]} and {key}')
+        paths[path] = key
 
 def generate(root=ROOT):
     metadata = json.loads((root / 'metadata.json').read_text(encoding='utf-8'))
@@ -40,6 +54,8 @@ def generate(root=ROOT):
         if not all(isinstance(summary.get(lang), str) and summary[lang] for lang in ('zh','en')):
             raise ValueError(f'{name}: both summary languages are required')
         path = primary.relative_to(root).as_posix()
+        pool_path = (meta['legacyPath'] if (name, version) in LEGACY_VERSIONS
+                     else primary.relative_to(root / 'packages').as_posix())
         assets = []
         for file in sorted(directory.rglob('*'), key=lambda p: p.as_posix().casefold()):
             if file.is_symlink():
@@ -48,9 +64,10 @@ def generate(root=ROOT):
                 rel = file.relative_to(root).as_posix()
                 assets.append({'path': file.relative_to(directory).as_posix(), 'url': BASE_URL + rel, 'sha256': sha(file.read_bytes())})
         packages.append({'name': name, 'version': version, 'kind': meta['kind'], 'summary': summary,
-                         'description': description, 'path': meta['legacyPath'], 'url': BASE_URL + path,
+                         'description': description, 'path': pool_path, 'url': BASE_URL + path,
                          'source': 'https://github.com/rich-netlist/rnl-packages/blob/main/' + path,
                          'sha256': sha(data), 'assets': assets})
+    unique_paths(packages)
     return {'schemaVersion': 1, 'packages': packages}
 
 def immutable(old, new):
