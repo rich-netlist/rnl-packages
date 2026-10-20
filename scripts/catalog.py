@@ -41,7 +41,7 @@ def generate(root=ROOT):
             raise ValueError(f'{name}: both summary languages are required')
         path = primary.relative_to(root).as_posix()
         assets = []
-        for file in sorted(directory.rglob('*')):
+        for file in sorted(directory.rglob('*'), key=lambda p: p.as_posix().casefold()):
             if file.is_symlink():
                 raise ValueError(f'{file}: symlinks are not published')
             if file.is_file():
