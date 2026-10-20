@@ -1,0 +1,68 @@
+name: Packages and Pages
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_BUILD_JOBS: 4
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Check generated catalog and immutable versions
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE" ] && [ "$BASE" != 0000000000000000000000000000000000000000 ]; then
+            python3 scripts/catalog.py --check --base "$BASE" --out dist
+          else
+            python3 scripts/catalog.py --check --out dist
+          fi
+      - name: Read pinned RNL revision
+        id: rnl
+        run: echo "revision=$(cat rnl-revision.txt)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: rich-netlist/rnl
+          ref: ${{ steps.rnl.outputs.revision }}
+          path: .rnl
+      - name: Install Rust and Node
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+      - name: Build pinned checker and renderer
+        run: |
+          cargo build --locked --manifest-path .rnl/Cargo.toml -p rnl-cli
+          node .rnl/bindings/runtime-wasm/build.mjs
+      - name: Check packages, examples and every symbol
+        run: python3 scripts/validate.py --rnl-root .rnl
+      - name: Upload validated package site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: dist
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346

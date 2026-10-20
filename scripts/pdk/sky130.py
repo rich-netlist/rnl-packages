@@ -20,7 +20,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-PKG_DIR = ROOT / "libraries" / "pdk" / "sky130"
+PKG_DIR = ROOT / "packages" / "pdk-sky130" / "0.1"
 PKG_FILE = PKG_DIR / "pdk-sky130.rnl"
 EXAMPLES_DIR = PKG_DIR / "examples"
 

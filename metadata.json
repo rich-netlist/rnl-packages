@@ -1,0 +1,31 @@
+{
+  "analog-canvas-extensions": {
+    "kind": "extension",
+    "legacyPath": "analog-canvas-extensions/analog-canvas-extensions.rnl",
+    "summary": {
+      "zh": "Analog Canvas 的外观变体和 chopper：Analog Canvas 自己的包，不属于标准系列。",
+      "en": "The look variants of Analog Canvas and its chopper: Analog Canvas’s own package, not part of the standard series."
+    }
+  },
+  "eda-symbol": {
+    "kind": "extension",
+    "legacyPath": "eda-symbol/eda-symbol.rnl",
+    "summary": {
+      "zh": "独立符号包：137 个不绑定配色的原理图符号和选用规则，引脚方向与标准库一致；可单独使用或搭配 eda-style。",
+      "en": "An independent package of 137 schematic symbols and selection rules, with no fixed colors and standard-compatible pin directions; use alone or with eda-style."
+    }
+  },
+  "eda-style": {
+    "kind": "extension",
+    "legacyPath": "eda-style/eda-style.rnl",
+    "summary": {
+      "zh": "独立样式包：绿色细线、红色符号文字、自动红色端子方块和等宽标签；适用于标准、eda-symbol 和自定义符号，符号几何由所用符号包提供。",
+      "en": "An independent visual package: green hairlines, red symbol text, automatic red terminal squares and monospaced labels for standard, eda-symbol and custom symbols; geometry comes from the chosen symbol package."
+    }
+  },
+  "pdk-sky130": {
+    "kind": "pdk",
+    "legacyPath": "pdk/sky130/pdk-sky130.rnl",
+    "summary": {}
+  }
+}

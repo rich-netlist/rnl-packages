@@ -1,0 +1,9 @@
+version = 1
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 many-question"
+SPDX-License-Identifier = "MIT"
+[[annotations]]
+path = "packages/**"
+SPDX-FileCopyrightText = "2026 many-question"
+SPDX-License-Identifier = "CC0-1.0"
