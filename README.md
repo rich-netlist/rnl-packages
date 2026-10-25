@@ -1,7 +1,5 @@
 # RNL public packages
 
-[中文](README.zh.md)
-
 Optional packages for [RNL](https://github.com/rich-netlist/rnl). The standard series, including `rnl-zh`, stays in RNL and is built into its viewers.
 
 | Package | Version | Kind |
