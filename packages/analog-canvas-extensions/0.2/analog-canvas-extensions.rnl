@@ -556,13 +556,16 @@
      Attached to the label: $CANVAS_LABEL @ATTACH(bind="name") #XM1::name */
   $CANVAS_LABEL = @DEFINE(roles=["label"], parameters=["bind", "parameter", "show_value"]) {};
 
-  /* How Analog Canvas sets the names in labels in the level it is written in: the case of a
-     subscript ("preserve", "uppercase" or "lowercase"), whether a subscript is italic, whether an
-     underscore starts a subscript, whether the characters after a leading letter are a subscript,
-     whether the leading letter is italic, and the face of all text ("serif"; absent, Analog
-     Canvas's own). A parameter left out is Analog Canvas's default. The scope is an empty set:
-     $CANVAS_TYPESETTING @ATTACH(subscript_italic=false) {} */
-  $CANVAS_TYPESETTING = @DEFINE(roles=["{scope}"], parameters=["subscript_case", "subscript_italic", "underscore_subscript", "subscript_after_first", "first_letter_italic", "face"]) {};
+  /* How Analog Canvas sets the names in labels in a level: the case of a subscript ("preserve",
+     "uppercase" or "lowercase"), whether a subscript is italic, whether an underscore starts a
+     subscript, whether the characters after a leading letter are a subscript, whether the leading
+     letter is italic, and the face of all text ("serif"; absent, Analog Canvas's own). A parameter
+     left out is Analog Canvas's default. Attached to the level, a lone # (6.3), in the level's
+     own record: $CANVAS_TYPESETTING @ATTACH(subscript_italic=false) #
+     Like the rest of a level's RNL it also reaches the levels the level contains (6.1), where a
+     usage of their own comes later and gives their settings; Analog Canvas writes one in each
+     subcircuit's record, which reaches no other. */
+  $CANVAS_TYPESETTING = @DEFINE(roles=["level"], parameters=["subscript_case", "subscript_italic", "underscore_subscript", "subscript_after_first", "first_letter_italic", "face"]) {};
 
   /* The text the author wrote for a parameter, where the netlist writes it otherwise: Spectre takes
      100f for 100fF, and 1M for 1Meg followed by an ohm sign. name is the parameter as the netlist names it, text the
