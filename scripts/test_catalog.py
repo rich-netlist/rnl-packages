@@ -59,6 +59,20 @@ class CatalogPaths(unittest.TestCase):
         self.assertEqual(package['path'], 'new-symbol/0.1/new-symbol.rnl')
         self.assertEqual(package['summary'], {'en': 'New'})
 
+    def test_a_version_may_have_its_own_summary(self):
+        existing = [p['version'] for p in self.published['packages'] if p['name'] == 'eda-symbol']
+        version = f"0.{max(int(v.split('.')[1]) for v in existing) + 1}"
+        self.add_version('eda-symbol', version)
+        metadata = json.loads((self.root / 'metadata.json').read_text(encoding='utf-8'))
+        metadata['eda-symbol']['versions'] = {version: {'summary': {'en': 'What this version adds'}}}
+        (self.root / 'metadata.json').write_text(json.dumps(metadata), encoding='utf-8')
+        catalog = generate(self.root)
+        # the version's own summary; the published records keep theirs
+        immutable(self.published, catalog)
+        summary = {p['version']: p['summary'] for p in catalog['packages'] if p['name'] == 'eda-symbol'}
+        self.assertEqual(summary[version], {'en': 'What this version adds'})
+        self.assertEqual(set(summary['0.1']), {'zh', 'en'})
+
     def test_a_summary_needs_its_english(self):
         self.add_version('new-symbol', '0.1')
         metadata = json.loads((self.root / 'metadata.json').read_text(encoding='utf-8'))

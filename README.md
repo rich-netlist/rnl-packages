@@ -4,7 +4,7 @@ Optional packages for [RNL](https://github.com/rich-netlist/rnl). The standard s
 
 | Package | Version | Kind |
 | --- | --- | --- |
-| analog-canvas-extensions | 0.1 | extension |
+| analog-canvas-extensions | 0.1, 0.2 | extension |
 | eda-symbol | 0.1 | extension |
 | eda-style | 0.1 | extension |
 | pdk-sky130 | 0.1 | pdk |
@@ -42,7 +42,7 @@ English is RNL's only core language ([decision 0015](https://github.com/rich-net
 ## Publish a version
 
 1. Create a branch and copy a package to a **new** `packages/NAME/major.minor/` directory. Update that copy's `@PACKAGE` version. Never edit or remove a published directory or its metadata.
-2. For a new name add its kind and its English summary, `{"en": "…"}`, to `metadata.json`; no `legacyPath` is needed. Its translations go into `summaries/`, now or later. For an existing name retain its metadata. New records always get version-qualified paths; the four imported 0.1 records remain byte-for-byte unchanged.
+2. For a new name add its kind and its English summary, `{"en": "…"}`, to `metadata.json`; no `legacyPath` is needed. Its translations go into `summaries/`, now or later. For an existing name retain its metadata; a version that adds something may get a summary of its own, `"versions": {"major.minor": {"summary": {"en": "…"}}}`, which only its record uses. New records always get version-qualified paths; the four imported 0.1 records remain byte-for-byte unchanged.
 3. Run `python scripts/catalog.py`, then `python scripts/catalog.py --check --base origin/main`. Review the generated URLs and hashes.
 4. Open an English pull request. CI checks all package headers and immutable records, reads every version without errors and renders every symbol with the **exact RNL commit in `rnl-revision.txt`**; it also runs `sky130.py --check`, including the PDK examples and stub models.
 5. After review and merge, the main workflow publishes the validated catalog and all versions to this repository's GitHub Pages. Verify the deployed catalog and hashes. There are no npm releases or Git tags in this process.

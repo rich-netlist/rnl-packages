@@ -36,8 +36,10 @@ def unique_paths(packages):
 def summary_of(name, version, meta, description):
     """The summary of a record. English is RNL's only core language (its decision 0015): a record has the
     English alone, and the translations are in summaries/, outside the records. The four imported 0.1
-    records keep the Chinese they were published with, from metadata.json, as they cannot change."""
-    summary = meta['summary']
+    records keep the Chinese they were published with, from metadata.json, as they cannot change; a
+    version listed under `versions` in metadata.json takes its own summary there, the others the name's."""
+    # A version may have a summary of its own, for what it adds; the others take the name's.
+    summary = meta.get('versions', {}).get(version, {}).get('summary') or meta['summary']
     if summary and not (isinstance(summary.get('en'), str) and summary['en'] and all(
             LANGUAGE.fullmatch(lang) and isinstance(text, str) and text for lang, text in summary.items())):
         raise ValueError(f'{name}: the summary needs an English text, and a text for each of its other languages')
