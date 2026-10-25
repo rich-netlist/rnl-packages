@@ -4,7 +4,7 @@ Optional packages for [RNL](https://github.com/rich-netlist/rnl). The standard s
 
 | Package | Version | Kind |
 | --- | --- | --- |
-| analog-canvas-extensions | 0.1 | extension |
+| analog-canvas-extensions | 0.1, 0.2 | extension |
 | eda-symbol | 0.1 | extension |
 | eda-style | 0.1 | extension |
 | pdk-sky130 | 0.1 | pdk |
