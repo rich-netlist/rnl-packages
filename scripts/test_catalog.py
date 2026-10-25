@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from catalog import ROOT, generate, immutable, unique_paths
+from catalog import ROOT, generate, immutable, summaries, unique_paths
 
 
 class CatalogPaths(unittest.TestCase):
@@ -43,16 +43,52 @@ class CatalogPaths(unittest.TestCase):
         paths = {p['version']: p['path'] for p in catalog['packages'] if p['name'] == 'eda-symbol'}
         self.assertEqual(paths, {**existing, version: f'eda-symbol/{version}/eda-symbol.rnl'})
         self.assertEqual(len({p['path'] for p in catalog['packages']}), len(self.published['packages']) + 1)
+        # a later record has the English summary alone; the Chinese of 0.1 stays in its record
+        summary = {p['version']: p['summary'] for p in catalog['packages'] if p['name'] == 'eda-symbol'}
+        self.assertEqual(set(summary['0.1']), {'zh', 'en'})
+        self.assertEqual(summary[version], {'en': summary['0.1']['en']})
 
     def test_new_name_needs_no_legacy_path(self):
         self.add_version('new-symbol', '0.1')
         metadata = json.loads((self.root / 'metadata.json').read_text(encoding='utf-8'))
-        metadata['new-symbol'] = {'kind': 'extension', 'summary': {'en': 'New', 'zh': '新包'}}
+        metadata['new-symbol'] = {'kind': 'extension', 'summary': {'en': 'New'}}
         (self.root / 'metadata.json').write_text(json.dumps(metadata), encoding='utf-8')
         catalog = generate(self.root)
         immutable(self.published, catalog)
         package = next(p for p in catalog['packages'] if p['name'] == 'new-symbol')
         self.assertEqual(package['path'], 'new-symbol/0.1/new-symbol.rnl')
+        self.assertEqual(package['summary'], {'en': 'New'})
+
+    def test_a_summary_needs_its_english(self):
+        self.add_version('new-symbol', '0.1')
+        metadata = json.loads((self.root / 'metadata.json').read_text(encoding='utf-8'))
+        for summary in ({'zh': '只有中文'}, {'en': ''}, {'en': 'New', 'zh': ''}, {'en': 'New', 'Not a code': 'x'}):
+            metadata['new-symbol'] = {'kind': 'extension', 'summary': summary}
+            (self.root / 'metadata.json').write_text(json.dumps(metadata, ensure_ascii=False), encoding='utf-8')
+            with self.subTest(summary=summary), self.assertRaisesRegex(ValueError, 'English text'):
+                generate(self.root)
+
+    def test_translations_of_the_summaries_outside_the_records(self):
+        catalog = generate(self.root)
+        english = next(p['summary']['en'] for p in catalog['packages'] if p['name'] == 'eda-style')
+        directory = self.root / 'summaries'
+        directory.mkdir()
+        key = ' '.join(english.split())
+        (directory / 'ja.json').write_text(json.dumps({key: '訳'}, ensure_ascii=False), encoding='utf-8')
+        self.assertEqual(summaries(self.root, catalog), {'ja': {key: '訳'}})
+        (directory / 'ja.json').write_text(json.dumps({key: None}), encoding='utf-8')
+        self.assertEqual(summaries(self.root, catalog), {'ja': {key: None}})
+        for name, data in (('ja.json', {'Not a summary': '訳'}), ('ja.json', {english: 1}), ('ja.json', []),
+                           ('en.json', {}), ('JA.json', {})):
+            for file in directory.iterdir():
+                file.unlink()
+            (directory / name).write_text(json.dumps(data), encoding='utf-8')
+            with self.subTest(name=name, data=data), self.assertRaises(ValueError):
+                summaries(self.root, catalog)
+
+    def test_the_repository_summaries(self):
+        catalog = json.loads((ROOT / 'catalog.json').read_text(encoding='utf-8'))
+        self.assertIn('zh', summaries(ROOT, catalog))
 
     def test_duplicate_generated_paths_rejected(self):
         metadata = json.loads((self.root / 'metadata.json').read_text(encoding='utf-8'))

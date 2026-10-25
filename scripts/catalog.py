@@ -16,6 +16,10 @@ PACKAGE = re.compile(r'@PACKAGE\(\s*name="([a-z0-9-]+)"\s*,\s*version="([0-9]+\.
 # multiple versions can coexist in a viewer's file pool without overwriting one.
 LEGACY_VERSIONS = {(name, '0.1') for name in (
     'analog-canvas-extensions', 'eda-symbol', 'eda-style', 'pdk-sky130')}
+LANGUAGE = re.compile(r'[a-z]{2,3}(?:-[a-z0-9]+)*')
+
+def norm(text):
+    return ' '.join(text.split())
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
@@ -28,6 +32,38 @@ def unique_paths(packages):
         if path in paths:
             raise ValueError(f'duplicate catalog path {path!r}: {paths[path]} and {key}')
         paths[path] = key
+
+def summary_of(name, version, meta, description):
+    """The summary of a record. English is RNL's only core language (its decision 0015): a record has the
+    English alone, and the translations are in summaries/, outside the records. The four imported 0.1
+    records keep the Chinese they were published with, from metadata.json, as they cannot change."""
+    summary = meta['summary']
+    if summary and not (isinstance(summary.get('en'), str) and summary['en'] and all(
+            LANGUAGE.fullmatch(lang) and isinstance(text, str) and text for lang, text in summary.items())):
+        raise ValueError(f'{name}: the summary needs an English text, and a text for each of its other languages')
+    if (name, version) in LEGACY_VERSIONS:
+        return summary or {'zh': description, 'en': description}
+    return {'en': summary['en'] if summary else description}
+
+def summaries(root, catalog):
+    """The translations of the records' summaries: summaries/LANG.json, an object keyed by the English
+    of a record's summary, with its runs of white space as one space, whose values are the translations,
+    or null where there is none yet. They are published beside the catalog and are not part of any
+    record, so a translation can be added or corrected at any time."""
+    english = {norm(p['summary']['en']) for p in catalog['packages']}
+    found = {}
+    for file in sorted((root / 'summaries').glob('*')):
+        lang = file.stem
+        if file.suffix != '.json' or not LANGUAGE.fullmatch(lang) or lang == 'en':
+            raise ValueError(f'{file}: a file of summaries is LANG.json, for a language other than English')
+        data = json.loads(file.read_text(encoding='utf-8'))
+        if not isinstance(data, dict) or not all(isinstance(text, (str, type(None))) for text in data.values()):
+            raise ValueError(f'{file}: an object whose values are translations, or null where there is none yet')
+        unknown = [key for key in data if key not in english]
+        if unknown:
+            raise ValueError(f'{file}: not the English summary of any record: {unknown[0]!r}')
+        found[lang] = data
+    return found
 
 def generate(root=ROOT):
     metadata = json.loads((root / 'metadata.json').read_text(encoding='utf-8'))
@@ -50,9 +86,7 @@ def generate(root=ROOT):
         lines = head.splitlines()
         indent = min((len(line)-len(line.lstrip()) for line in lines[1:] if line.strip()), default=0)
         description = '\n'.join(line.strip() if i == 0 else line[indent:].rstrip() for i, line in enumerate(lines)).strip().split('\n\n')[0]
-        summary = meta['summary'] or {'zh': description, 'en': description}
-        if not all(isinstance(summary.get(lang), str) and summary[lang] for lang in ('zh','en')):
-            raise ValueError(f'{name}: both summary languages are required')
+        summary = summary_of(name, version, meta, description)
         path = primary.relative_to(root).as_posix()
         pool_path = (meta['legacyPath'] if (name, version) in LEGACY_VERSIONS
                      else primary.relative_to(root / 'packages').as_posix())
@@ -84,6 +118,7 @@ def main():
     ap.add_argument('--out', type=Path, help='Pages output directory')
     args = ap.parse_args()
     catalog = generate()
+    translations = summaries(ROOT, catalog)
     text = json.dumps(catalog, ensure_ascii=False, indent=2) + '\n'
     if args.base:
         result = subprocess.run(['git', 'show', f'{args.base}:catalog.json'], cwd=ROOT, capture_output=True)
@@ -100,9 +135,12 @@ def main():
         args.out.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(target, args.out/'catalog.json')
         shutil.copytree(ROOT/'packages', args.out/'packages', dirs_exist_ok=True)
+        if translations:
+            shutil.copytree(ROOT/'summaries', args.out/'summaries', dirs_exist_ok=True)
         (args.out/'.nojekyll').touch()
         (args.out/'index.html').write_text('<!doctype html><title>RNL public packages</title><a href="catalog.json">Package catalog</a>\n', encoding='utf-8')
-    print(f"ok: {len(catalog['packages'])} immutable package versions")
+    print(f"ok: {len(catalog['packages'])} immutable package versions; summaries in "
+          f"{', '.join(translations) or 'English alone'}")
 
 if __name__ == '__main__':
     main()
