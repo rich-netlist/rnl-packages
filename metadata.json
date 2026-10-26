@@ -11,6 +11,11 @@
         "summary": {
           "en": "Analog Canvas’s own package, not part of the standard series: its look variants and its chopper, and four definitions of meaning only that bring a file it writes back to it unchanged (part names, label bindings, typesetting, parameter text)."
         }
+      },
+      "0.3": {
+        "summary": {
+          "en": "Analog Canvas’s own package, not part of the standard series: its look variants and its chopper, and four definitions of meaning only that bring a file it writes back to it unchanged (part names, label bindings, typesetting and wire crossings, parameter text)."
+        }
       }
     }
   },
