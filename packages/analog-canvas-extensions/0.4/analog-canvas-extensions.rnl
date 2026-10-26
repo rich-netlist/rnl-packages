@@ -1,6 +1,6 @@
-/* analog-canvas-extensions 0.4: 0.3, and three more definitions of meaning only (since 0.4): the
-   typography of a drawing text, the parameters of a part that the netlist does not print, and a
-   part that has no name.
+/* analog-canvas-extensions 0.4: 0.3, and six more definitions of meaning only (since 0.4): the
+   typography of a drawing text, the parameters of a part that the netlist does not print, a part
+   that has no name, the variant a part is drawn as, the name of a Cell, and the top Cell.
    0.3: 0.2, whose $CANVAS_TYPESETTING also gives how wires that cross without connecting are drawn
    (crossings, since 0.3).
    0.2: 0.1, and four definitions of meaning only (below, since 0.2).
@@ -596,5 +596,25 @@
   /* The part has no name in Analog Canvas: the netlist gives it the name a card must have, and
      Analog Canvas leaves it unnamed again. Attached to the part, since 0.4:
      $CANVAS_UNNAMED @ATTACH #X1 */
-  $CANVAS_UNNAMED = @DEFINE(roles=[["part", "instance"]]) {}
+  $CANVAS_UNNAMED = @DEFINE(roles=[["part", "instance"]]) {};
+
+  /* The Analog Canvas symbol a part is drawn with, where RNL draws two of its symbols alike: an
+     op-amp flipped top to bottom is drawn as the op-amp with its inputs swapped, unflipped. symbol
+     is Analog Canvas's id of the symbol; without it, Analog Canvas reads such a part as the symbol
+     that needs no mirror. Attached to the part, since 0.4:
+     $CANVAS_VARIANT @ATTACH(symbol="opamp") #X1 */
+  $CANVAS_VARIANT = @DEFINE(roles=[["part", "instance"]], parameters=["symbol"]) {};
+
+  /* The name Analog Canvas gives the Cell a level is, where the netlist must write it otherwise: a
+     subcircuit name has no spaces, so the Cell "Bootstrap switch" is the subcircuit
+     Bootstrap_switch. Attached to the level, a lone # (6.3), in the level's own record, since 0.4:
+     $CANVAS_CELL_NAME @ATTACH(name="Bootstrap switch") #
+     Analog Canvas writes one only in the record of the subcircuit it names, which reaches no other
+     (6.1). */
+  $CANVAS_CELL_NAME = @DEFINE(roles=["level"], parameters=["name"]) {};
+
+  /* The level is the Cell Analog Canvas opens as its project's top, which the netlist need not
+     show: a Cell that calls it is printed too, so the netlist's top is that Cell. Attached to the
+     level, a lone #, in the level's own record, since 0.4: $CANVAS_TOP @ATTACH # */
+  $CANVAS_TOP = @DEFINE(roles=["level"]) {}
 }
