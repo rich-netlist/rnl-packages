@@ -26,6 +26,11 @@
         "summary": {
           "en": "Analog Canvas’s own package, not part of the standard series: its look variants, its chopper and its quartz crystal, and definitions of meaning only that bring a file it writes back to it unchanged (part names, label bindings, typesetting and wire crossings, parameter text, text typography, parameters the netlist does not print, unnamed parts, symbol variants, Cell names, the top Cell)."
         }
+      },
+      "0.6": {
+        "summary": {
+          "en": "Analog Canvas’s own package, not part of the standard series: its look variants, its chopper, its quartz crystal and twelve more of its parts (polarized capacitor, LED, Schottky, Shockley, PUT, UJT, potentiometer, photoresistor, speaker, microphone, sine source, ammeter), and definitions of meaning only that bring a file it writes back to it unchanged (part names, label bindings, typesetting and wire crossings, parameter text, text typography, parameters the netlist does not print, unnamed parts, symbol variants, Cell names, the top Cell)."
+        }
       }
     }
   },
