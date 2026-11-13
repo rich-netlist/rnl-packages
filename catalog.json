@@ -214,6 +214,41 @@
       ]
     },
     {
+      "name": "eda-style",
+      "version": "0.2",
+      "kind": "extension",
+      "summary": {
+        "en": "An independent visual package for RNL 0.4: green hairlines, red symbol text, automatic red terminal squares on the pins of instances, grounds and supplies, and monospaced labels, for standard, eda-symbol and custom symbols, with rules that reach every level."
+      },
+      "description": "eda-style 0.2.\nUniversal IC schematic visual style package for RNL 0.4.\nApplies green hairline symbol strokes (`linewidth=0, linecolor=\"#00cc66\"`),\nred symbol texts (`textcolor=\"#ff0000\"`), solid red 0.8x0.8 terminal squares on the pins of\ninstances, grounds and supplies via `@SELECT-PIN`, solid red port polygons, hairline wires\n(`linewidth=0`), and a monospaced font (`Lucida Console, Monaco, DejaVu Sans Mono, Consolas, monospace`).\nIts rules write `recursive=true`, so they reach every level below the one that uses the package.\nCan be used standalone or paired with `eda-symbol` 0.2.",
+      "path": "eda-style/0.2/eda-style.rnl",
+      "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-style/0.2/eda-style.rnl",
+      "source": "https://github.com/rich-netlist/rnl-packages/blob/main/packages/eda-style/0.2/eda-style.rnl",
+      "sha256": "2529a5892174d63bbb60827868906d0e9d23d84a97e52292c178a1a1bbb6be34",
+      "assets": [
+        {
+          "path": "eda-style-gallery.scs",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-style/0.2/eda-style-gallery.scs",
+          "sha256": "aef1b7c9b18578b97600ed6259905f4ab62289fc01a2f2aebcc0331b0d59ae5a"
+        },
+        {
+          "path": "eda-style.rnl",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-style/0.2/eda-style.rnl",
+          "sha256": "2529a5892174d63bbb60827868906d0e9d23d84a97e52292c178a1a1bbb6be34"
+        },
+        {
+          "path": "examples/custom-symbol.sp",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-style/0.2/examples/custom-symbol.sp",
+          "sha256": "2b9e04ada3f2cc886a9ed2ca4b19adcbba99a341c1cc950153e913323fe3b754"
+        },
+        {
+          "path": "README.md",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-style/0.2/README.md",
+          "sha256": "f7bef8d82c268120e62c7a96857a9634d6e429e18f52661687dcf4da7e717b48"
+        }
+      ]
+    },
+    {
       "name": "eda-symbol",
       "version": "0.1",
       "kind": "extension",
@@ -236,6 +271,31 @@
           "path": "README.md",
           "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-symbol/0.1/README.md",
           "sha256": "44f961ea696845aca77de91a0b2ae53ddf53abe980ce2d2703b0bee78b62b765"
+        }
+      ]
+    },
+    {
+      "name": "eda-symbol",
+      "version": "0.2",
+      "kind": "extension",
+      "summary": {
+        "en": "An independent package of 133 schematic symbols and selection rules for RNL 0.4, with no fixed colors: pins bind the terminal names of the standard series 0.4, the geometry of 0.1 is kept, and its rules reach every level; use alone or with eda-style."
+      },
+      "description": "eda-symbol 0.2.\nStreamlined, universal IC schematic symbol library for RNL 0.4.\nDraws the symbols of the standard series 0.4 that it shares (`$RESISTOR`, `$CAPACITOR`, `$NMOS_4TERM`,\n`$OPAMP`, `$AND_2INPUT`, etc.) in its own geometry, adds universal IC schematic symbols (`$VSIN`,\n`$VPULSE`, `$VPWL`, `$IDEAL_BALUN`, `$MIXER`, `$LOWPASS_FILTER`, `$VC_VG_DIFFAMP`, etc.), and gives\ninstance and usage symbol selection rules with pure, style-agnostic geometry. Pins bind the terminal\nnames of the standard series 0.4; the eda-only symbols of masters without standard terminal names\nbind by position. Pair with `eda-style` 0.2 for green hairline strokes, red symbol texts, solid red\nterminal squares, and hairline wires.",
+      "path": "eda-symbol/0.2/eda-symbol.rnl",
+      "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-symbol/0.2/eda-symbol.rnl",
+      "source": "https://github.com/rich-netlist/rnl-packages/blob/main/packages/eda-symbol/0.2/eda-symbol.rnl",
+      "sha256": "02305def01062b0086fc022944447317428286f700bb8342e7ffc5b0783de4a8",
+      "assets": [
+        {
+          "path": "eda-symbol.rnl",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-symbol/0.2/eda-symbol.rnl",
+          "sha256": "02305def01062b0086fc022944447317428286f700bb8342e7ffc5b0783de4a8"
+        },
+        {
+          "path": "README.md",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/eda-symbol/0.2/README.md",
+          "sha256": "7460c8c83bfad6864cc9eb1e886013764b9ac55bf6dd88a23b0ef672eb761bec"
         }
       ]
     },

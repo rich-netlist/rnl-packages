@@ -5,8 +5,8 @@ Optional packages for [RNL](https://github.com/rich-netlist/rnl). The standard s
 | Package | Version | Kind |
 | --- | --- | --- |
 | analog-canvas-extensions | 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 | extension |
-| eda-symbol | 0.1 | extension |
-| eda-style | 0.1 | extension |
+| eda-symbol | 0.1, 0.2 | extension |
+| eda-style | 0.1, 0.2 | extension |
 | pdk-sky130 | 0.1 | pdk |
 
 The package files, examples and package READMEs retain their original bytes. Their history was imported from RNL main (the exact source revision is in `rnl-revision.txt`) using git-filter-repo, selecting the four former library directories and `scripts/pdk/`, and renaming the library directories to `packages/NAME/VERSION/`.
@@ -18,10 +18,10 @@ The catalog is published at <https://rich-netlist.github.io/rnl-packages/catalog
 In the web viewer choose **File → Include Public Package…**, then name the package in the netlist:
 
 ```spice
-* @RNL(type="header") { @VERSION("0.3"); @USE-PACKAGE(name="eda-symbol", version="0.1") }
+* @RNL(type="header") { @VERSION("0.4"); @USE-PACKAGE(name="rnl-std-all", version="0.4"); @USE-PACKAGE(name="eda-symbol", version="0.2") }
 ```
 
-For the CLI, download the version from its catalog URL, verify its SHA-256 against the catalog, and run `rnl check circuit.sp --path /downloaded/packages/eda-symbol/0.1`. The same directory works with `rnl render`. Include dependencies as separate package directories when needed.
+For the CLI, download the version from its catalog URL, verify its SHA-256 against the catalog, and run `rnl check circuit.sp --path /downloaded/packages/eda-symbol/0.2`. The same directory works with `rnl render`. Include dependencies as separate package directories when needed.
 
 ## Catalog format (schemaVersion 1)
 
