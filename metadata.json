@@ -31,6 +31,11 @@
         "summary": {
           "en": "Analog Canvas’s own package, not part of the standard series: its look variants, its chopper, its quartz crystal and twelve more of its parts (polarized capacitor, LED, Schottky, Shockley, PUT, UJT, potentiometer, photoresistor, speaker, microphone, sine source, ammeter), and definitions of meaning only that bring a file it writes back to it unchanged (part names, label bindings, typesetting and wire crossings, parameter text, text typography, parameters the netlist does not print, unnamed parts, symbol variants, Cell names, the top Cell)."
         }
+      },
+      "0.7": {
+        "summary": {
+          "en": "Analog Canvas’s own package for the language 0.4: its look variants of standard symbols, its four-input gates and four-terminal MOSFETs, and the definitions of meaning only that bring a file it writes back to it unchanged."
+        }
       }
     }
   },
