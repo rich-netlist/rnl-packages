@@ -153,6 +153,31 @@
       ]
     },
     {
+      "name": "analog-canvas-extensions",
+      "version": "0.7",
+      "kind": "extension",
+      "summary": {
+        "en": "Analog Canvas’s own package for the language 0.4: its look variants of standard symbols, its four-input gates and four-terminal MOSFETs, and the definitions of meaning only that bring a file it writes back to it unchanged."
+      },
+      "description": "analog-canvas-extensions 0.7, the Analog Canvas package for the language 0.4.\nNot standard: Analog Canvas's appearance variants of standard symbols, named $CANVAS_ and its\ncomponent id, its four-input gates, its four-terminal MOSFETs with the body pin at (1, 0), and\nfacts of its drawings that the netlist does not keep. A file names it with USE-PACKAGE (16.2);\nthe core does not bundle it. Written in the language 0.4, as the standard series 0.4 is (decision\n0017), so a file of 0.4 alone uses it; the symbols of earlier versions that the standard series\n0.4 now has (the crystal, the polarized capacitor and the other parts 0.5 and 0.6 added, the\ncontrolled-source diamonds, the pulse source, the chopper, the twisted differential op-amp) are\nno longer here.\nCoordinates are y-up; one unit is one grid step, ten Analog Canvas units. Each pin binds the\nterminal of its name, as the standard symbols do (9.2.4): a subcircuit instance drawn with one\nneeds ports of these names, or terminals= on its SET-SYMBOL (11.3). The single-pole double-throw\nswitch, a figure, has pins that bind nothing, as the standard one does.",
+      "path": "analog-canvas-extensions/0.7/analog-canvas-extensions.rnl",
+      "url": "https://rich-netlist.github.io/rnl-packages/packages/analog-canvas-extensions/0.7/analog-canvas-extensions.rnl",
+      "source": "https://github.com/rich-netlist/rnl-packages/blob/main/packages/analog-canvas-extensions/0.7/analog-canvas-extensions.rnl",
+      "sha256": "71b0d2a7ad8a4cc7e79fb331d803be6ffecb4e06d138a694e1fe26160b645a0e",
+      "assets": [
+        {
+          "path": "analog-canvas-extensions.rnl",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/analog-canvas-extensions/0.7/analog-canvas-extensions.rnl",
+          "sha256": "71b0d2a7ad8a4cc7e79fb331d803be6ffecb4e06d138a694e1fe26160b645a0e"
+        },
+        {
+          "path": "README.md",
+          "url": "https://rich-netlist.github.io/rnl-packages/packages/analog-canvas-extensions/0.7/README.md",
+          "sha256": "40884314d4a8419fc3540f5dea9db9d2b0318c1ad83d3f5afee7b9cc774b5e43"
+        }
+      ]
+    },
+    {
       "name": "eda-style",
       "version": "0.1",
       "kind": "extension",

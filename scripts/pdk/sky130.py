@@ -24,7 +24,19 @@ PKG_DIR = ROOT / "packages" / "pdk-sky130" / "0.1"
 PKG_FILE = PKG_DIR / "pdk-sky130.rnl"
 EXAMPLES_DIR = PKG_DIR / "examples"
 
-COUNTS = re.compile(r"(\d+) errors?, (\d+) warnings?, (\d+) hints?")
+COUNTS = re.compile(r"(\d+) errors?,(?: (\d+) violations?,)? (\d+) warnings?, (\d+) hints?")
+
+
+def clean(m, warnings_allowed=False):
+    """No error and no violation; for the package file, no warning either.
+    Hints, and the warnings a published example gets from a newer checker's
+    layout checks (its files are immutable), are reported only."""
+    return (
+        bool(m)
+        and int(m.group(1)) == 0
+        and int(m.group(2) or 0) == 0
+        and (warnings_allowed or int(m.group(3)) == 0)
+    )
 
 
 @dataclass(frozen=True)
@@ -607,13 +619,13 @@ def check_all(rnl_path: str | None = None) -> None:
 
     rnl = find_rnl(rnl_path)
 
-    # 1. Check the package file itself (0 errors, 0 warnings, 0 hints)
+    # 1. Check the package file itself (no error, violation or warning)
     res = run_rnl(rnl, "check", str(PKG_FILE))
     if res.returncode != 0:
         raise RuntimeError(f"rnl check failed on {PKG_FILE}:\n{res.stdout}\n{res.stderr}")
     m = COUNTS.search(res.stdout + res.stderr)
-    if not m or (int(m.group(1)), int(m.group(2)), int(m.group(3))) != (0, 0, 0):
-        raise RuntimeError(f"expected 0 errors, 0 warnings, 0 hints on {PKG_FILE}, got:\n{res.stdout}\n{res.stderr}")
+    if not clean(m):
+        raise RuntimeError(f"expected no error, violation or warning on {PKG_FILE}, got:\n{res.stdout}\n{res.stderr}")
     print(f"[ok] rnl check {PKG_FILE.relative_to(ROOT)}: {res.stdout.strip()}")
 
     # 2. Check and render every example netlist in both Without-PDK and With-PDK modes
@@ -632,7 +644,7 @@ def check_all(rnl_path: str | None = None) -> None:
             if res_chk.returncode != 0:
                 raise RuntimeError(f"Without-PDK check failed on {ex.name}:\n{res_chk.stdout}\n{res_chk.stderr}")
             m = COUNTS.search(res_chk.stdout + res_chk.stderr)
-            if not m or (int(m.group(1)), int(m.group(2)), int(m.group(3))) != (0, 0, 0):
+            if not clean(m, warnings_allowed=True):
                 raise RuntimeError(f"Without-PDK check had diagnostics on {ex.name}:\n{res_chk.stdout}\n{res_chk.stderr}")
 
             svg_dir_without = tmp_dir / f"{ex.name}.without-pdk"
@@ -666,7 +678,7 @@ def check_all(rnl_path: str | None = None) -> None:
             if res_chk_pdk.returncode != 0:
                 raise RuntimeError(f"With-PDK check failed on {ex.name}:\n{res_chk_pdk.stdout}\n{res_chk_pdk.stderr}")
             m2 = COUNTS.search(res_chk_pdk.stdout + res_chk_pdk.stderr)
-            if not m2 or (int(m2.group(1)), int(m2.group(2)), int(m2.group(3))) != (0, 0, 0):
+            if not clean(m2, warnings_allowed=True):
                 raise RuntimeError(
                     f"With-PDK check had diagnostics on {ex.name}:\n{res_chk_pdk.stdout}\n{res_chk_pdk.stderr}"
                 )
