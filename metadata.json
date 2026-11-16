@@ -49,7 +49,7 @@
     "versions": {
       "0.2": {
         "summary": {
-          "en": "An independent package of 133 schematic symbols and selection rules for RNL 0.4, with no fixed colors: pins bind the terminal names of the standard series 0.4, the geometry of 0.1 is kept, and its rules reach every level; use alone or with eda-style."
+          "en": "An independent package of 133 schematic symbols and selection rules for RNL 0.4, with no fixed colors: pins bind the terminal names of the standard series 0.4, the geometry of 0.1 is kept except that the diodes and the transformer stand upright as in that series, and its rules reach every level; use alone or with eda-style."
         }
       }
     }

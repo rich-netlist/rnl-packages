@@ -30,7 +30,7 @@ rnl render your-netlist.scs --path packages/eda-symbol/0.2 -o out/symbols
 
 ## Pins and terminals
 
-Every pin keeps the coordinates and direction it has in 0.1. What changes is what a pin binds:
+Every pin keeps the coordinates and direction it has in 0.1, except in the diodes and the transformer, which stand upright as in the standard series 0.4 (see below). What changes is what a pin binds:
 
 - The 88 symbols that share a name with the standard series 0.4 bind its terminal names, such as `p n` for passives and sources, `d g s b` for MOS, `c b e` for bipolar transistors, `a k` for diodes, `p n cp cn` for controlled sources and switches and `p1 n1 p2 n2` for transformers and transmission lines. A file that replaces `eda-symbol` with the standard symbols therefore keeps its terminal references.
 - `$VSIN`, `$ISIN`, `$VPULSE`, `$IPULSE`, `$VPWL`, `$IPWL` (`p n`), `$SCHOTTKY` (`a k`) and `$NPN4` (`c b e s`) bind the terminal names of the Spectre primitive or model family they draw.
@@ -53,6 +53,8 @@ The instance rules write `@SET-SYMBOL(terminals=[…])` in node order (RNL 0.4, 
 | `key="formula"` | `key="label"` |
 | Net names of ports, supplies and named grounds, `key="name"` | `key="netname"` |
 | The rule that drew named grounds through `$NAMED_GROUND_NET_SET` | removed: `rnl-std-fill` draws them itself |
+| `$DIODE`, `$ZENER_DIODE`, `$SCHOTTKY` lying, anode at the left | upright, anode `a` at the top `(0, 3)` and cathode `k` at the bottom `(0, -3)`: the 0.1 drawing turned by R270, as in the standard series 0.4 |
+| `$TRANSFORMER` lying, windings at the top and bottom | upright: the 0.1 drawing turned by R90, `p1` `(-2, 3)` over `n1` `(-2, -3)`, `p2` `(2, 3)` over `n2` `(2, -3)` |
 
 Symbol sizes and lead lengths may differ from the standard drawings. In the six four-terminal MOS symbols, the bulk pin stays at `(0, 0)` facing right, rather than the standard's `(1, 0)`. Every pin-facing box edge lies on that side's outermost pin.
 
