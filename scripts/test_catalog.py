@@ -64,7 +64,8 @@ class CatalogPaths(unittest.TestCase):
         version = f"0.{max(int(v.split('.')[1]) for v in existing) + 1}"
         self.add_version('eda-symbol', version)
         metadata = json.loads((self.root / 'metadata.json').read_text(encoding='utf-8'))
-        metadata['eda-symbol']['versions'] = {version: {'summary': {'en': 'What this version adds'}}}
+        # beside the summaries that published versions already have
+        metadata['eda-symbol'].setdefault('versions', {})[version] = {'summary': {'en': 'What this version adds'}}
         (self.root / 'metadata.json').write_text(json.dumps(metadata), encoding='utf-8')
         catalog = generate(self.root)
         # the version's own summary; the published records keep theirs
