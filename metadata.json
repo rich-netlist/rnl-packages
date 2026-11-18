@@ -78,6 +78,11 @@
         "summary": {
           "en": "The SkyWater SKY130 PDK symbol package for RNL 0.4: the terminal names of every sky130_fd_pr device family and the kind of its transistors, model rules onto the symbols of the standard series 0.4, and eight symbols for devices with substrate, bulk or shield pins; with or without the PDK models included."
         }
+      },
+      "0.3": {
+        "summary": {
+          "en": "The SkyWater SKY130 PDK symbol package for RNL 0.4: the terminal names of every sky130_fd_pr device family and the kind of its transistors, model rules onto the symbols of the standard series 0.4, and eight symbols for devices with substrate, bulk or shield pins; with or without the PDK models included."
+        }
       }
     }
   }
