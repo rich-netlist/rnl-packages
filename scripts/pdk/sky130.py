@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Builds and checks the SkyWater SKY130 PDK symbol package, libraries/pdk/sky130/pdk-sky130.rnl.
+"""Builds and checks the SkyWater SKY130 PDK symbol package, packages/pdk-sky130/VERSION/pdk-sky130.rnl.
+
+Version 0.1 is written in the language 0.3 on the standard series 0.3; version 0.2 in the
+language 0.4 on the standard series 0.4. Both come from the same device groups and symbols.
 
 Usage:
-  python scripts/pdk/sky130.py           # write libraries/pdk/sky130/pdk-sky130.rnl
-  python scripts/pdk/sky130.py --check   # verify package is up-to-date and run rnl check/render on examples
+  python scripts/pdk/sky130.py           # write every version's pdk-sky130.rnl
+  python scripts/pdk/sky130.py --check   # verify every version is up-to-date and run rnl check/render on its examples
 """
 
 from __future__ import annotations
@@ -20,9 +23,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-PKG_DIR = ROOT / "packages" / "pdk-sky130" / "0.1"
-PKG_FILE = PKG_DIR / "pdk-sky130.rnl"
-EXAMPLES_DIR = PKG_DIR / "examples"
+VERSIONS = ("0.1", "0.2")
+
+
+def package_dir(version: str) -> Path:
+    return ROOT / "packages" / "pdk-sky130" / version
 
 COUNTS = re.compile(r"(\d+) errors?,(?: (\d+) violations?,)? (\d+) warnings?, (\d+) hints?")
 
@@ -47,6 +52,11 @@ class DeviceGroup:
     terminals: tuple[str, ...]
     symbol: str
     value_label_from_model: bool = False
+    # From 0.2, the symbol's terminal names in node order, where they differ from the device's.
+    pins: tuple[str, ...] = ()
+    # From 0.2, the instance type @DEVICE gives the models, so the standard's semantics
+    # (pairs, mirrors, bulk fills) treat them as the native devices.
+    type: str = ""
 
 
 # Authoritative SkyWater SKY130 (sky130_fd_pr) device groups and terminal orders.
@@ -74,6 +84,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("d", "g", "s", "b"),
         symbol="$NMOS_4TERM",
+        type="nmos",
     ),
     # --- 2. 4-terminal Native / Zero-Vt NMOS (d g s b) -> $DEPLETION_NMOS_4TERM ---
     DeviceGroup(
@@ -89,6 +100,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("d", "g", "s", "b"),
         symbol="$DEPLETION_NMOS_4TERM",
+        type="nmos",
     ),
     # --- 3. 4-terminal Drain-Extended / 20 V NMOS (d g s b) -> $NDMOS_4TERM ---
     DeviceGroup(
@@ -107,6 +119,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("d", "g", "s", "b"),
         symbol="$NDMOS_4TERM",
+        type="nmos",
     ),
     # --- 4. 5-terminal Isolated 20 V NMOS (d g s b sub) -> $SKY130_NMOS_5TERM ---
     DeviceGroup(
@@ -122,6 +135,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("d", "g", "s", "b", "sub"),
         symbol="$SKY130_NMOS_5TERM",
+        type="nmos",
     ),
     # --- 5. 4-terminal PMOS (d g s b) -> $PMOS_4TERM ---
     DeviceGroup(
@@ -140,6 +154,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("d", "g", "s", "b"),
         symbol="$PMOS_4TERM",
+        type="pmos",
     ),
     # --- 6. 4-terminal Drain-Extended / 20 V PMOS (d g s b) -> $PDMOS_4TERM ---
     DeviceGroup(
@@ -153,6 +168,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("d", "g", "s", "b"),
         symbol="$PDMOS_4TERM",
+        type="pmos",
     ),
     # --- 7. 4-terminal NPN BJT (c b e s) -> $SKY130_NPN_4TERM ---
     DeviceGroup(
@@ -167,6 +183,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("c", "b", "e", "s"),
         symbol="$SKY130_NPN_4TERM",
+        type="npn",
     ),
     # --- 8. 4-terminal PNP BJT (c b e s) -> $SKY130_PNP_4TERM ---
     DeviceGroup(
@@ -180,6 +197,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         ),
         terminals=("c", "b", "e", "s"),
         symbol="$SKY130_PNP_4TERM",
+        type="pnp",
     ),
     # --- 9. 3-terminal Poly & Well Resistors (r0 r1 b) -> $SKY130_RESISTOR_3TERM ---
     DeviceGroup(
@@ -255,6 +273,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         terminals=("r0", "r1"),
         symbol="$RESISTOR",
         value_label_from_model=True,
+        pins=("p", "n"),
     ),
     # --- 14. 2-terminal MIM Capacitors (c0 c1) -> $CAPACITOR ---
     DeviceGroup(
@@ -269,6 +288,7 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
         terminals=("c0", "c1"),
         symbol="$CAPACITOR",
         value_label_from_model=True,
+        pins=("p", "n"),
     ),
     # --- 15. 3-terminal MOS Varactors (c0 c1 b) -> $SKY130_VARACTOR_3TERM ---
     DeviceGroup(
@@ -342,16 +362,25 @@ DEVICE_GROUPS: tuple[DeviceGroup, ...] = (
 )
 
 
-def render_package() -> str:
+def render_package(version: str = "0.1") -> str:
+    if version not in VERSIONS:
+        raise ValueError(f"unknown pdk-sky130 version {version}")
+    v01 = version == "0.1"
     lines: list[str] = []
-    lines.append("/* pdk-sky130 0.1, a PDK symbol package for the SkyWater SKY130 PDK (sky130_fd_pr).")
+    if v01:
+        lines.append("/* pdk-sky130 0.1, a PDK symbol package for the SkyWater SKY130 PDK (sky130_fd_pr).")
+    else:
+        lines.append("/* pdk-sky130 0.2, a PDK symbol package for the SkyWater SKY130 PDK (sky130_fd_pr), for RNL 0.4.")
     lines.append("   Generated by scripts/pdk/sky130.py; run `python scripts/pdk/sky130.py --check` to verify.")
     lines.append("")
     lines.append("   Target PDK: SkyWater Open Source PDK (sky130_fd_pr, v0.2.0 / open_pdks sky130A/sky130B).")
     lines.append("   Upstream PDK repository: https://github.com/google/skywater-pdk-libs-sky130_fd_pr")
     lines.append("   Upstream PDK license: Apache-2.0 (Copyright 2020 The SkyWater PDK Authors).")
     lines.append("   No PDK model parameters, equations, or subcircuit netlists are copied into this file;")
-    lines.append("   this package contains only RNL 0.3 terminal name declarations (@DEVICE), schematic")
+    if v01:
+        lines.append("   this package contains only RNL 0.3 terminal name declarations (@DEVICE), schematic")
+    else:
+        lines.append("   this package contains only RNL 0.4 terminal name declarations (@DEVICE), schematic")
     lines.append("   symbols (@DEFINE-SYMBOL), and model-to-symbol selection rules (@SELECT-INSTANCE).")
     lines.append("")
     lines.append("   Dialect coverage:")
@@ -360,21 +389,33 @@ def render_package() -> str:
     lines.append("   - Spectre (.scs): subcircuit/model instances (`M1 (d g s b) sky130_fd_pr__nfet_01v8 ...`)")
     lines.append("     whose instance names do not start with `X`.")
     lines.append("   - Works both WITHOUT PDK model files included (terminal names come from @DEVICE in the")
-    lines.append("     header below) and WITH PDK `.subckt` / `subckt` definitions included (6.12). */")
+    if v01:
+        lines.append("     header below) and WITH PDK `.subckt` / `subckt` definitions included (6.12). */")
+    else:
+        lines.append("     header below) and WITH PDK `.subckt` / `subckt` definitions included. */")
     lines.append('@RNL(type="header") {')
-    lines.append('  @VERSION("0.3");')
-    lines.append('  @PACKAGE(name="pdk-sky130", version="0.1");')
-    lines.append('  @USE-PACKAGE(name="rnl-std-basic", version="0.3");')
-    lines.append('  @USE-PACKAGE(name="rnl-std-semiconductors", version="0.3");')
-    lines.append("")
-    lines.append("  /* -------------------------------------------------------------- terminal declarations (6.12) */")
+    if v01:
+        lines.append('  @VERSION("0.3");')
+        lines.append('  @PACKAGE(name="pdk-sky130", version="0.1");')
+        lines.append('  @USE-PACKAGE(name="rnl-std-basic", version="0.3");')
+        lines.append('  @USE-PACKAGE(name="rnl-std-semiconductors", version="0.3");')
+        lines.append("")
+        lines.append("  /* -------------------------------------------------------------- terminal declarations (6.12) */")
+    else:
+        lines.append('  @VERSION("0.4");')
+        lines.append('  @PACKAGE(name="pdk-sky130", version="0.2");')
+        lines.append('  @USE-PACKAGE(name="rnl-std-basic", version="0.4");')
+        lines.append('  @USE-PACKAGE(name="rnl-std-semiconductors", version="0.4");')
+        lines.append("")
+        lines.append("  /* -------------------------------------------------------------- terminal declarations */")
 
     device_entries: list[str] = []
     for grp in DEVICE_GROUPS:
         terms_str = ", ".join(f'"{t}"' for t in grp.terminals)
         device_entries.append(f"  /* {grp.category}: {grp.description} */")
         for model in grp.models:
-            device_entries.append(f'  @DEVICE(name="*", model="{model}", terminals=[{terms_str}]);')
+            typed = f', type="{grp.type}"' if grp.type and not v01 else ""
+            device_entries.append(f'  @DEVICE(name="*", model="{model}", terminals=[{terms_str}]{typed});')
 
     # Strip trailing semicolon on the very last @DEVICE statement inside @RNL(type="header")
     if device_entries and device_entries[-1].endswith(";"):
@@ -382,14 +423,22 @@ def render_package() -> str:
     lines.extend(device_entries)
     lines.append("}")
     lines.append("")
-    lines.append("/* ---------------------------------------------------------------- SKY130 multi-terminal symbols (9.2)")
-    lines.append("   Standard 0.3 provides 2-terminal passives ($RESISTOR, $CAPACITOR, $INDUCTOR, $DIODE),")
+    if v01:
+        lines.append("/* ---------------------------------------------------------------- SKY130 multi-terminal symbols (9.2)")
+        lines.append("   Standard 0.3 provides 2-terminal passives ($RESISTOR, $CAPACITOR, $INDUCTOR, $DIODE),")
+    else:
+        lines.append("/* ---------------------------------------------------------------- SKY130 multi-terminal symbols")
+        lines.append("   Standard 0.4 provides 2-terminal passives ($RESISTOR, $CAPACITOR, $INDUCTOR, $DIODE),")
     lines.append("   3-terminal BJTs ($NPN, $PNP), and 4-terminal MOSFETs ($NMOS_4TERM, $PMOS_4TERM,")
     lines.append("   $DEPLETION_NMOS_4TERM, $NDMOS_4TERM, $PDMOS_4TERM). In sky130_fd_pr, precision poly")
     lines.append("   and diffusion resistors have 3 terminals (with bulk/substrate), MOS varactors and VPP")
     lines.append("   capacitors have 3 or 4 terminals, vertical BJTs are 4-terminal subcircuits (c b e s),")
     lines.append("   isolated 20 V NMOS devices have 5 terminals (d g s b sub), and RF spiral inductors")
-    lines.append("   have 4 terminals (a b ct sub). All pins sit on integer grid points (9.2.4). */")
+    if v01:
+        lines.append("   have 4 terminals (a b ct sub). All pins sit on integer grid points (9.2.4). */")
+    else:
+        lines.append("   have 4 terminals (a b ct sub). All pins sit on integer grid points and bind the")
+        lines.append("   device's terminals by position. */")
     lines.append("@RNL {")
     lines.append("  /* r0 r1 b (or r0 r1 sub, r1 r2 b, t1 t2 b) = 1 2 3; 3-terminal resistor with substrate/bulk pin */")
     lines.append("  $SKY130_RESISTOR_3TERM = @DEFINE-SYMBOL(box=[-2, -2, 1, 2]) {")
@@ -532,20 +581,32 @@ def render_package() -> str:
     lines.append("  }")
     lines.append("}")
     lines.append("")
-    lines.append("/* ---------------------------------------------------------------- model-to-symbol rules (10.1)")
+    if v01:
+        lines.append("/* ---------------------------------------------------------------- model-to-symbol rules (10.1)")
+    else:
+        lines.append("/* ---------------------------------------------------------------- model-to-symbol rules")
     lines.append("   Broad wildcard patterns come before narrow overrides (such as 4-terminal shielded VPP")
     lines.append("   capacitors overriding 3-terminal VPP capacitors). For 2-terminal passives that reuse")
     lines.append("   $RESISTOR or $CAPACITOR from rnl-std-basic, key=\"value\" defaults to `${model}` so")
-    lines.append("   subcircuit calls show their SKY130 model when no explicit value label is set. */")
+    if v01:
+        lines.append("   subcircuit calls show their SKY130 model when no explicit value label is set. */")
+    else:
+        lines.append("   subcircuit calls show their SKY130 model when no explicit value label is set; their")
+        lines.append("   pins p and n bind the device's two terminals in node order (r0 r1, c0 c1). Every rule")
+        lines.append("   reaches instances at every level. */")
     lines.append("@RNL {")
 
+    select = "" if v01 else ", recursive=true"
     rule_lines: list[str] = []
     for grp in DEVICE_GROUPS:
         rule_lines.append(f"  /* {grp.category} */")
+        bind = ""
+        if not v01 and grp.pins:
+            bind = "(terminals=[" + ", ".join(f'"{p}"' for p in grp.pins) + "])"
         for model in grp.models:
-            rule_lines.append(f'  # @SELECT-INSTANCE(model="{model}") => @SET-SYMBOL {grp.symbol};')
+            rule_lines.append(f'  # @SELECT-INSTANCE(model="{model}"{select}) => @SET-SYMBOL{bind} {grp.symbol};')
             if grp.value_label_from_model:
-                rule_lines.append(f'  # @SELECT-INSTANCE(model="{model}") => @TEXT("${{model}}", key="value");')
+                rule_lines.append(f'  # @SELECT-INSTANCE(model="{model}"{select}) => @TEXT("${{model}}", key="value");')
 
     if rule_lines and rule_lines[-1].endswith(";"):
         rule_lines[-1] = rule_lines[-1][:-1]
@@ -610,14 +671,24 @@ def stub_pdk_spectre() -> str:
 
 
 def check_all(rnl_path: str | None = None) -> None:
-    expected = render_package()
+    rnl = find_rnl(rnl_path)
+    for version in VERSIONS:
+        check_version(rnl, version)
+
+
+def check_version(rnl: Path, version: str) -> None:
+    PKG_DIR = package_dir(version)
+    PKG_FILE = PKG_DIR / "pdk-sky130.rnl"
+    EXAMPLES_DIR = PKG_DIR / "examples"
+    # The published 0.1 examples get warnings from a newer checker's layout checks and are
+    # immutable; the examples of later versions allow none.
+    warnings_allowed = version == "0.1"
+    expected = render_package(version)
     if not PKG_FILE.is_file():
         raise RuntimeError(f"missing {PKG_FILE}")
     actual = PKG_FILE.read_text(encoding="utf-8").replace("\r\n", "\n")
     if actual != expected:
         raise RuntimeError(f"{PKG_FILE.relative_to(ROOT)} is out of date; run `python scripts/pdk/sky130.py`")
-
-    rnl = find_rnl(rnl_path)
 
     # 1. Check the package file itself (no error, violation or warning)
     res = run_rnl(rnl, "check", str(PKG_FILE))
@@ -626,7 +697,7 @@ def check_all(rnl_path: str | None = None) -> None:
     m = COUNTS.search(res.stdout + res.stderr)
     if not clean(m):
         raise RuntimeError(f"expected no error, violation or warning on {PKG_FILE}, got:\n{res.stdout}\n{res.stderr}")
-    print(f"[ok] rnl check {PKG_FILE.relative_to(ROOT)}: {res.stdout.strip()}")
+    print(f"[ok] rnl check {PKG_FILE.relative_to(ROOT)}: {res.stdout.strip().splitlines()[-1]}")
 
     # 2. Check and render every example netlist in both Without-PDK and With-PDK modes
     example_files = sorted( list(EXAMPLES_DIR.glob("*.sp")) + list(EXAMPLES_DIR.glob("*.scs")) )
@@ -644,7 +715,7 @@ def check_all(rnl_path: str | None = None) -> None:
             if res_chk.returncode != 0:
                 raise RuntimeError(f"Without-PDK check failed on {ex.name}:\n{res_chk.stdout}\n{res_chk.stderr}")
             m = COUNTS.search(res_chk.stdout + res_chk.stderr)
-            if not clean(m, warnings_allowed=True):
+            if not clean(m, warnings_allowed=warnings_allowed):
                 raise RuntimeError(f"Without-PDK check had diagnostics on {ex.name}:\n{res_chk.stdout}\n{res_chk.stderr}")
 
             svg_dir_without = tmp_dir / f"{ex.name}.without-pdk"
@@ -655,7 +726,7 @@ def check_all(rnl_path: str | None = None) -> None:
             svg_without = svg_out.read_text(encoding="utf-8")
             if "<svg" not in svg_without:
                 raise RuntimeError(f"Invalid SVG output for {ex.name}")
-            print(f"[ok] Without-PDK check + render {ex.name}: {res_chk.stdout.strip()}")
+            print(f"[ok] {version} Without-PDK check + render {ex.name}: {res_chk.stdout.strip().splitlines()[-1]}")
 
             # (b) With-PDK mode: uncomment the .include / include line in a temp copy and verify
             src = ex.read_text(encoding="utf-8").replace("\r\n", "\n")
@@ -678,7 +749,7 @@ def check_all(rnl_path: str | None = None) -> None:
             if res_chk_pdk.returncode != 0:
                 raise RuntimeError(f"With-PDK check failed on {ex.name}:\n{res_chk_pdk.stdout}\n{res_chk_pdk.stderr}")
             m2 = COUNTS.search(res_chk_pdk.stdout + res_chk_pdk.stderr)
-            if not clean(m2, warnings_allowed=True):
+            if not clean(m2, warnings_allowed=warnings_allowed):
                 raise RuntimeError(
                     f"With-PDK check had diagnostics on {ex.name}:\n{res_chk_pdk.stdout}\n{res_chk_pdk.stderr}"
                 )
@@ -691,7 +762,7 @@ def check_all(rnl_path: str | None = None) -> None:
             svg_with = svg_out_pdk.read_text(encoding="utf-8")
             if svg_with != svg_without:
                 raise RuntimeError(f"Rendered SVG differs between Without-PDK and With-PDK modes for {ex.name}")
-            print(f"[ok] With-PDK check + render {ex.name} (SVG identical): {res_chk_pdk.stdout.strip()}")
+            print(f"[ok] {version} With-PDK check + render {ex.name} (SVG identical): {res_chk_pdk.stdout.strip().splitlines()[-1]}")
 
 
 def main() -> int:
@@ -704,9 +775,11 @@ def main() -> int:
         check_all(args.rnl)
         return 0
 
-    PKG_DIR.mkdir(parents=True, exist_ok=True)
-    PKG_FILE.write_text(render_package(), encoding="utf-8", newline="\n")
-    print(f"Wrote {PKG_FILE.relative_to(ROOT)}")
+    for version in VERSIONS:
+        pkg_file = package_dir(version) / "pdk-sky130.rnl"
+        pkg_file.parent.mkdir(parents=True, exist_ok=True)
+        pkg_file.write_text(render_package(version), encoding="utf-8", newline="\n")
+        print(f"Wrote {pkg_file.relative_to(ROOT)}")
     return 0
 
 

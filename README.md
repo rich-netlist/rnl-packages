@@ -7,7 +7,7 @@ Optional packages for [RNL](https://github.com/rich-netlist/rnl). The standard s
 | analog-canvas-extensions | 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 | extension |
 | eda-symbol | 0.1, 0.2 | extension |
 | eda-style | 0.1, 0.2 | extension |
-| pdk-sky130 | 0.1 | pdk |
+| pdk-sky130 | 0.1, 0.2 | pdk |
 
 The package files, examples and package READMEs retain their original bytes. Their history was imported from RNL main (the exact source revision is in `rnl-revision.txt`) using git-filter-repo, selecting the four former library directories and `scripts/pdk/`, and renaming the library directories to `packages/NAME/VERSION/`.
 
